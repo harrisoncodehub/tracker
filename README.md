@@ -1,3 +1,1 @@
-# tracker
-l;lock in 
-[Visit site] https://harrisoncodehub.github.io/tracker/
+ # [Tracker](https://harrisoncodehub.github.io/tracker/)
