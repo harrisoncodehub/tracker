@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -202,7 +203,7 @@
    STEP 4 OF SETUP — paste your two Supabase values here.
    Find them in: Supabase dashboard → Project Settings → API
    ============================================================ */
-const SUPABASE_URL = "https://yqbabtqnurtsevzkcqxs.supabase.co";
+const SUPABASE_URL =“https://yqbabtqnurtsevzkcqxs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3UxIJLgycZdk5EX7FmOG3g_kDklhIqD";
 /* ============================================================ */
 
@@ -298,15 +299,27 @@ async function signOut() { await sb.auth.signOut(); location.reload(); }
 
 /* ---------- LOAD FROM DB ---------- */
 async function loadAll() {
+  // Draw the UI first — the store list is built into the app and never needs the DB.
+  renderGrocery();
+  renderTracker();
   setSync('saving');
+
+  // Load saved checks (isolated so a failure can't blank the screen)
   try {
-    const { data: gs } = await sb.from('grocery_state').select('checks').eq('user_id', user.id).maybeSingle();
+    const { data: gs, error } = await sb.from('grocery_state').select('checks').eq('user_id', user.id).maybeSingle();
+    if (error) throw error;
     checks = (gs && gs.checks) ? gs.checks : {};
-    const { data: fl } = await sb.from('food_logs').select('*').eq('user_id', user.id).eq('log_date', todayStr()).order('created_at');
+    renderGrocery();
+  } catch (e) { console.warn('grocery_state load failed:', e); }
+
+  // Load today's food log (isolated)
+  try {
+    const { data: fl, error } = await sb.from('food_logs').select('*').eq('user_id', user.id).eq('log_date', todayStr()).order('created_at');
+    if (error) throw error;
     log = fl || [];
-    renderGrocery(); renderTracker();
+    renderTracker();
     setSync('synced');
-  } catch (e) { setSync('offline'); }
+  } catch (e) { console.warn('food_logs load failed:', e); setSync('offline'); }
 }
 
 /* ---------- GROCERY ---------- */
